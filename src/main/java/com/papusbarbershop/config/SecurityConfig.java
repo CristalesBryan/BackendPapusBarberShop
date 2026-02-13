@@ -134,19 +134,17 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        // Permitir cualquier origen (usar patrones específicos en producción)
-        configuration.setAllowedOriginPatterns(Arrays.asList("*"));
+        // Permitir todos los subdominios de Railway
+        configuration.setAllowedOriginPatterns(Arrays.asList(
+            "https://*.up.railway.app",
+            "http://localhost:4200"  // Para desarrollo local
+        ));
         
-        // Permitir métodos HTTP estándar
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        
-        // Permitir cualquier header
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
-        
-        // Permitir credenciales en las peticiones
         configuration.setAllowCredentials(true);
-
-        // Registrar la configuración para todas las rutas
+        configuration.setExposedHeaders(Arrays.asList("Authorization"));
+        
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
