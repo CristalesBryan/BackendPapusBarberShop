@@ -80,10 +80,11 @@ public class SecurityConfig {
                         .requestMatchers("/admin/reset-admin-password").permitAll()
                         
                         // Permitir acceso público a endpoints para vista de clientes (sin autenticación)
-                        .requestMatchers("/api/tipos-corte").permitAll() // GET para tipos de corte activos
-                        .requestMatchers("/barberos").permitAll() // GET para lista de barberos
-                        .requestMatchers("/productos").permitAll() // GET para lista de productos
-                        .requestMatchers("/api/citas/disponibilidad").permitAll() // GET para disponibilidad
+                        // IMPORTANTE: Las rutas más específicas deben ir ANTES de las generales
+                        .requestMatchers("/api/tipos-corte").permitAll() // GET para tipos de corte activos (público)
+                        .requestMatchers("/api/citas/disponibilidad/**").permitAll() // GET para disponibilidad con cualquier parámetro (público)
+                        .requestMatchers("/barberos").permitAll() // GET para lista de barberos (público para Vista-Clientes)
+                        .requestMatchers("/productos").permitAll() // GET para lista de productos (público)
                         .requestMatchers("/api/citas").permitAll() // POST para crear citas (vista pública)
                         
                         // Endpoints de S3 - URLs presignadas públicas, eliminación requiere autenticación
@@ -97,15 +98,12 @@ public class SecurityConfig {
                         // ADMIN y BARBERO: Acceso a servicios y ventas
                         .requestMatchers("/servicios/**").hasAnyRole("ADMIN", "BARBERO")
                         .requestMatchers("/ventas-productos/**").hasAnyRole("ADMIN", "BARBERO")
-                        // Permitir lectura de barberos, tipos-corte y productos para BARBERO (necesario para formularios)
-                        // Las rutas específicas deben ir antes que las generales con **
-                        .requestMatchers("/barberos").hasAnyRole("ADMIN", "BARBERO") // GET para lista de barberos
-                        .requestMatchers("/tipos-corte").hasAnyRole("ADMIN", "BARBERO") // GET para lista de tipos de corte
-                        .requestMatchers("/productos").hasAnyRole("ADMIN", "BARBERO") // GET para lista de productos (necesario para ventas)
-                        // ADMIN: Acceso completo a todo lo demás
-                        .requestMatchers("/barberos/**").hasRole("ADMIN") // Otros métodos de barberos solo para ADMIN
-                        .requestMatchers("/tipos-corte/**").hasRole("ADMIN") // Otros métodos de tipos-corte solo para ADMIN
-                        .requestMatchers("/productos/**").hasRole("ADMIN") // Otros métodos de productos solo para ADMIN
+                        
+                        // ADMIN: Acceso completo a operaciones CRUD (POST, PUT, DELETE)
+                        // NOTA: Las rutas GET ya están permitidas públicamente arriba
+                        .requestMatchers("/barberos/**").hasRole("ADMIN") // POST, PUT, DELETE de barberos solo para ADMIN
+                        .requestMatchers("/tipos-corte/**").hasRole("ADMIN") // POST, PUT, DELETE de tipos-corte solo para ADMIN
+                        .requestMatchers("/productos/**").hasRole("ADMIN") // POST, PUT, DELETE de productos solo para ADMIN
                         .requestMatchers("/horarios/**").hasRole("ADMIN")
                         .requestMatchers("/citas/**").hasRole("ADMIN")
                         .requestMatchers("/mobiliario-equipo/**").hasRole("ADMIN")
