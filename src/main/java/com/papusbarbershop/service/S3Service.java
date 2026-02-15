@@ -173,18 +173,18 @@ public class S3Service {
                 bucketName, region, presignedUrlExpiration);
 
         try (S3Presigner presigner = createS3Presigner()) {
-            // Construir PutObjectRequest con todas las configuraciones necesarias
-            PutObjectRequest.Builder putObjectRequestBuilder = PutObjectRequest.builder()
+            // Construir PutObjectRequest SIN Content-Type para evitar SignatureDoesNotMatch
+            // El Content-Type NO debe estar firmado en la URL presignada
+            // Solo se firma el header "host", permitiendo que el frontend envíe cualquier Content-Type
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                     .bucket(bucketName)
                     .key(key)
-                    .contentType(contentType);
+                    .build();
             
-            // Nota: ACL está deprecado en buckets nuevos, pero algunos buckets pueden requerirlo
-            // Si el bucket tiene Block Public ACLs deshabilitado, puedes usar ACL
-            // Por ahora, no incluimos ACL ya que las URLs presignadas funcionan sin él
-            // Si necesitas acceso público, configura el bucket policy en lugar de ACL
-            
-            PutObjectRequest putObjectRequest = putObjectRequestBuilder.build();
+            // Nota: No incluimos Content-Type en el PutObjectRequest porque:
+            // 1. Si se incluye, queda firmado en SignedHeaders (content-type;host)
+            // 2. Esto causa SignatureDoesNotMatch si el Content-Type enviado no coincide exactamente
+            // 3. Al no incluirlo, solo se firma "host" y el frontend puede enviar cualquier Content-Type
 
             PutObjectPresignRequest presignRequest = PutObjectPresignRequest.builder()
                     .signatureDuration(Duration.ofSeconds(presignedUrlExpiration))
