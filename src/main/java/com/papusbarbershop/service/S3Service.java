@@ -158,6 +158,10 @@ public class S3Service {
         if (contentType == null || contentType.isEmpty()) {
             contentType = "application/octet-stream";
             logger.warn("ContentType no proporcionado, usando por defecto: {}", contentType);
+        } else {
+            // Normalizar Content-Type: lowercase y trim para asegurar coincidencia exacta
+            contentType = contentType.toLowerCase().trim();
+            logger.debug("ContentType normalizado: {}", contentType);
         }
         
         // Generar un nombre único para el archivo
