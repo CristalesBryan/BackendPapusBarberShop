@@ -8,6 +8,7 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
+import jakarta.annotation.PostConstruct;
 import java.util.List;
 
 /**
@@ -39,6 +40,30 @@ public class EmailAsyncService {
 
     @Value("${spring.mail.username:}")
     private String emailFrom;
+
+    /**
+     * Valida la configuración de email después de la inicialización.
+     */
+    @PostConstruct
+    public void validateEmailConfiguration() {
+        logger.info("=== Validando configuración de Email ===");
+        
+        if (mailSender == null) {
+            logger.error("⚠️  ADVERTENCIA: JavaMailSender no está configurado.");
+            logger.error("⚠️  Los correos de confirmación NO se enviarán.");
+            logger.error("⚠️  Para habilitar el envío de correos, configura las siguientes variables de entorno en Railway:");
+            logger.error("⚠️    - SPRING_MAIL_HOST (ej: smtp.gmail.com)");
+            logger.error("⚠️    - SPRING_MAIL_PORT (ej: 587)");
+            logger.error("⚠️    - SPRING_MAIL_USERNAME (tu email de Gmail)");
+            logger.error("⚠️    - SPRING_MAIL_PASSWORD (contraseña de aplicación de Gmail)");
+            logger.error("⚠️  Obtén una contraseña de aplicación en: https://myaccount.google.com/apppasswords");
+        } else {
+            logger.info("✓ JavaMailSender configurado correctamente");
+            logger.info("✓ Email remitente: {}", (emailFrom != null && !emailFrom.isEmpty() ? emailFrom : "noreply@papusbarbershop.com"));
+        }
+        
+        logger.info("=== Validación de Email completada ===");
+    }
 
     /**
      * Envía un correo de confirmación de cita de forma ASÍNCRONA.
