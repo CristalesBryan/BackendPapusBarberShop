@@ -29,7 +29,7 @@ Se ha implementado un sistema completo de envío asíncrono de correos electrón
          │ submit() - NO bloquea
          ▼
 ┌─────────────────┐
-│  JavaMailSender  │  (Envía el correo)
+│    SesClient    │  (Amazon SES - Envía el correo)
 └─────────────────┘
 ```
 
@@ -187,9 +187,15 @@ public class CitaController {
 
 ## 🔧 Configuración
 
-No se requiere configuración adicional. El sistema usa:
+El sistema requiere las siguientes variables de entorno:
+- `AWS_SES_ACCESS_KEY` - Access Key ID de AWS IAM con permisos SES
+- `AWS_SES_SECRET_KEY` - Secret Access Key de AWS IAM
+- `AWS_SES_REGION` - Región de AWS donde está configurado SES (ej: us-east-2)
+- `SES_FROM_EMAIL` - Email remitente verificado en Amazon SES
+
+El sistema usa:
 - `ExecutorService` con pool fijo de 5 hilos
-- `JavaMailSender` configurado en `application.properties`
+- `SesClient` (Amazon SES) configurado en `SesConfig.java`
 - Logging automático de todas las operaciones
 
 ---
@@ -209,7 +215,7 @@ No se requiere configuración adicional. El sistema usa:
    ↓
 6. (En segundo plano) Hilo del pool ejecuta el envío
    ↓
-7. JavaMailSender envía el correo
+7. SesClient (Amazon SES) envía el correo
    ↓
 8. Logs registran el resultado
 ```

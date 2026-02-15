@@ -4,15 +4,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
+import software.amazon.awssdk.services.ses.SesClient;
+import software.amazon.awssdk.services.ses.model.*;
 
 import jakarta.annotation.PostConstruct;
 import java.util.List;
 
 /**
- * Servicio asíncrono para el envío de correos electrónicos.
+ * Servicio asíncrono para el envío de correos electrónicos usando Amazon SES.
  * 
  * Este servicio desacopla el envío de correos del flujo principal de la aplicación,
  * ejecutando las operaciones de envío en segundo plano mediante un ExecutorService.
@@ -20,12 +20,13 @@ import java.util.List;
  * ARQUITECTURA:
  * - EmailAsyncService: Coordina el envío asíncrono
  * - EmailExecutor: Gestiona el pool de hilos (ExecutorService)
- * - JavaMailSender: Realiza el envío real del correo
+ * - SesClient: Realiza el envío real del correo usando Amazon SES
  * 
  * VENTAJAS:
  * - No bloquea las respuestas del servidor
  * - Las excepciones se manejan dentro del hilo asíncrono
  * - Escalable: puede manejar múltiples envíos simultáneos
+ * - Confiable: Amazon SES maneja la entrega de correos
  */
 @Service
 public class EmailAsyncService {
@@ -33,12 +34,12 @@ public class EmailAsyncService {
     private static final Logger logger = LoggerFactory.getLogger(EmailAsyncService.class);
 
     @Autowired(required = false)
-    private JavaMailSender mailSender;
+    private SesClient sesClient;
 
     @Autowired
     private EmailExecutor emailExecutor;
 
-    @Value("${spring.mail.username:}")
+    @Value("${ses.from.email:noreply@papusbarbershop.com}")
     private String emailFrom;
 
     /**
@@ -46,23 +47,22 @@ public class EmailAsyncService {
      */
     @PostConstruct
     public void validateEmailConfiguration() {
-        logger.info("=== Validando configuración de Email ===");
+        logger.info("=== Validando configuración de Amazon SES ===");
         
-        if (mailSender == null) {
-            logger.error("⚠️  ADVERTENCIA: JavaMailSender no está configurado.");
+        if (sesClient == null) {
+            logger.error("⚠️  ADVERTENCIA: SesClient no está configurado.");
             logger.error("⚠️  Los correos de confirmación NO se enviarán.");
             logger.error("⚠️  Para habilitar el envío de correos, configura las siguientes variables de entorno en Railway:");
-            logger.error("⚠️    - SPRING_MAIL_HOST (ej: smtp.gmail.com)");
-            logger.error("⚠️    - SPRING_MAIL_PORT (ej: 587)");
-            logger.error("⚠️    - SPRING_MAIL_USERNAME (tu email de Gmail)");
-            logger.error("⚠️    - SPRING_MAIL_PASSWORD (contraseña de aplicación de Gmail)");
-            logger.error("⚠️  Obtén una contraseña de aplicación en: https://myaccount.google.com/apppasswords");
+            logger.error("⚠️    - AWS_SES_ACCESS_KEY (Access Key ID de AWS IAM)");
+            logger.error("⚠️    - AWS_SES_SECRET_KEY (Secret Access Key de AWS IAM)");
+            logger.error("⚠️    - AWS_SES_REGION (Región de AWS, ej: us-east-2)");
+            logger.error("⚠️    - SES_FROM_EMAIL (Email remitente verificado en SES)");
         } else {
-            logger.info("✓ JavaMailSender configurado correctamente");
-            logger.info("✓ Email remitente: {}", (emailFrom != null && !emailFrom.isEmpty() ? emailFrom : "noreply@papusbarbershop.com"));
+            logger.info("✓ SesClient configurado correctamente");
+            logger.info("✓ Email remitente: {}", emailFrom);
         }
         
-        logger.info("=== Validación de Email completada ===");
+        logger.info("=== Validación de Amazon SES completada ===");
     }
 
     /**
@@ -131,43 +131,72 @@ public class EmailAsyncService {
     }
 
     /**
-     * Método privado que realiza el envío real del correo de confirmación.
+     * Método privado que realiza el envío real del correo de confirmación usando Amazon SES.
      * Este método se ejecuta dentro del hilo asíncrono.
      */
     private void enviarCorreoConfirmacion(List<String> correos, String nombreCliente, 
                                          String fecha, String hora, String barberoNombre,
                                          String tipoCorteNombre, String comentarios) {
         
-        if (mailSender == null) {
-            logger.warn("JavaMailSender no está configurado. No se enviará el correo.");
+        if (sesClient == null) {
+            logger.warn("SesClient no está configurado. No se enviará el correo.");
             logger.info("Correo que se habría enviado a: {}", correos);
             return;
         }
 
         try {
             String asunto = "Confirmación de Cita - Papus BarberShop";
-            String cuerpo = construirCuerpoEmail(nombreCliente, fecha, hora, barberoNombre, 
-                                                tipoCorteNombre, comentarios);
-
-            String correoRemitente = (emailFrom != null && !emailFrom.isEmpty()) 
-                    ? emailFrom 
-                    : "noreply@papusbarbershop.com";
+            String cuerpoTexto = construirCuerpoEmailTexto(nombreCliente, fecha, hora, barberoNombre, 
+                                                          tipoCorteNombre, comentarios);
+            String cuerpoHtml = construirCuerpoEmailHtml(nombreCliente, fecha, hora, barberoNombre, 
+                                                        tipoCorteNombre, comentarios);
 
             logger.info("Iniciando envío asíncrono de correos de confirmación. Remitente: {}, Destinatarios: {}", 
-                    correoRemitente, correos);
+                    emailFrom, correos);
 
             int correosEnviadosExitosamente = 0;
             for (String correo : correos) {
                 try {
-                    SimpleMailMessage mensaje = new SimpleMailMessage();
-                    mensaje.setTo(correo.trim());
-                    mensaje.setSubject(asunto);
-                    mensaje.setText(cuerpo);
-                    mensaje.setFrom(correoRemitente);
+                    // Construir el mensaje con contenido HTML y texto plano
+                    Content subject = Content.builder()
+                            .data(asunto)
+                            .charset("UTF-8")
+                            .build();
 
-                    mailSender.send(mensaje);
+                    Content textBody = Content.builder()
+                            .data(cuerpoTexto)
+                            .charset("UTF-8")
+                            .build();
+
+                    Content htmlBody = Content.builder()
+                            .data(cuerpoHtml)
+                            .charset("UTF-8")
+                            .build();
+
+                    Body body = Body.builder()
+                            .text(textBody)
+                            .html(htmlBody)
+                            .build();
+
+                    Message message = Message.builder()
+                            .subject(subject)
+                            .body(body)
+                            .build();
+
+                    Destination destination = Destination.builder()
+                            .toAddresses(correo.trim())
+                            .build();
+
+                    SendEmailRequest emailRequest = SendEmailRequest.builder()
+                            .source(emailFrom)
+                            .destination(destination)
+                            .message(message)
+                            .build();
+
+                    SendEmailResponse response = sesClient.sendEmail(emailRequest);
                     correosEnviadosExitosamente++;
-                    logger.info("✓ Correo de confirmación enviado exitosamente a: {} (asíncrono)", correo);
+                    logger.info("✓ Correo de confirmación enviado exitosamente a: {} (asíncrono). MessageId: {}", 
+                            correo, response.messageId());
                 } catch (Exception e) {
                     logger.error("✗ Error al enviar correo a {} (asíncrono): {}", correo, e.getMessage(), e);
                     // Continuar con los demás correos aunque uno falle
@@ -183,28 +212,48 @@ public class EmailAsyncService {
     }
 
     /**
-     * Método privado que realiza el envío real de un correo simple.
+     * Método privado que realiza el envío real de un correo simple usando Amazon SES.
      * Este método se ejecuta dentro del hilo asíncrono.
      */
     private void enviarCorreoSimple(String destinatario, String asunto, String mensaje) {
-        if (mailSender == null) {
-            logger.warn("JavaMailSender no está configurado. No se enviará el correo.");
+        if (sesClient == null) {
+            logger.warn("SesClient no está configurado. No se enviará el correo.");
             return;
         }
 
         try {
-            String correoRemitente = (emailFrom != null && !emailFrom.isEmpty()) 
-                    ? emailFrom 
-                    : "noreply@papusbarbershop.com";
+            Content subject = Content.builder()
+                    .data(asunto)
+                    .charset("UTF-8")
+                    .build();
 
-            SimpleMailMessage mailMessage = new SimpleMailMessage();
-            mailMessage.setTo(destinatario.trim());
-            mailMessage.setSubject(asunto);
-            mailMessage.setText(mensaje);
-            mailMessage.setFrom(correoRemitente);
+            Content textBody = Content.builder()
+                    .data(mensaje)
+                    .charset("UTF-8")
+                    .build();
 
-            mailSender.send(mailMessage);
-            logger.info("✓ Correo enviado exitosamente a: {} (asíncrono)", destinatario);
+            Body body = Body.builder()
+                    .text(textBody)
+                    .build();
+
+            Message message = Message.builder()
+                    .subject(subject)
+                    .body(body)
+                    .build();
+
+            Destination destination = Destination.builder()
+                    .toAddresses(destinatario.trim())
+                    .build();
+
+            SendEmailRequest emailRequest = SendEmailRequest.builder()
+                    .source(emailFrom)
+                    .destination(destination)
+                    .message(message)
+                    .build();
+
+            SendEmailResponse response = sesClient.sendEmail(emailRequest);
+            logger.info("✓ Correo enviado exitosamente a: {} (asíncrono). MessageId: {}", 
+                    destinatario, response.messageId());
         } catch (Exception e) {
             logger.error("✗ Error al enviar correo a {} (asíncrono): {}", destinatario, e.getMessage(), e);
             // No propagar la excepción - ya está dentro del hilo asíncrono
@@ -212,11 +261,11 @@ public class EmailAsyncService {
     }
 
     /**
-     * Construye el cuerpo del correo electrónico de confirmación.
+     * Construye el cuerpo del correo electrónico de confirmación en formato texto plano.
      */
-    private String construirCuerpoEmail(String nombreCliente, String fecha, String hora,
-                                       String barberoNombre, String tipoCorteNombre, 
-                                       String comentarios) {
+    private String construirCuerpoEmailTexto(String nombreCliente, String fecha, String hora,
+                                            String barberoNombre, String tipoCorteNombre, 
+                                            String comentarios) {
         StringBuilder cuerpo = new StringBuilder();
         cuerpo.append("¡Hola ").append(nombreCliente).append("! 👋\n\n");
         cuerpo.append("✨ Su cita ha sido confirmada exitosamente ✨\n\n");
@@ -236,6 +285,55 @@ public class EmailAsyncService {
         cuerpo.append("Equipo Papus BarberShop 💈");
         
         return cuerpo.toString();
+    }
+
+    /**
+     * Construye el cuerpo del correo electrónico de confirmación en formato HTML.
+     */
+    private String construirCuerpoEmailHtml(String nombreCliente, String fecha, String hora,
+                                           String barberoNombre, String tipoCorteNombre, 
+                                           String comentarios) {
+        StringBuilder html = new StringBuilder();
+        html.append("<!DOCTYPE html>");
+        html.append("<html>");
+        html.append("<head><meta charset=\"UTF-8\"></head>");
+        html.append("<body style=\"font-family: Arial, sans-serif; line-height: 1.6; color: #333;\">");
+        html.append("<div style=\"max-width: 600px; margin: 0 auto; padding: 20px;\">");
+        html.append("<h2 style=\"color: #2c3e50;\">¡Hola ").append(escapeHtml(nombreCliente)).append("! 👋</h2>");
+        html.append("<p style=\"font-size: 18px; color: #27ae60;\">✨ Su cita ha sido confirmada exitosamente ✨</p>");
+        html.append("<div style=\"background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0;\">");
+        html.append("<h3 style=\"color: #2c3e50; margin-top: 0;\">📋 Detalles de la cita:</h3>");
+        html.append("<p><strong>📅 Fecha:</strong> ").append(escapeHtml(fecha)).append("</p>");
+        html.append("<p><strong>🕐 Hora:</strong> ").append(escapeHtml(hora)).append("</p>");
+        html.append("<p><strong>💇 Barbero:</strong> ").append(escapeHtml(barberoNombre)).append("</p>");
+        html.append("<p><strong>✂️ Tipo de Corte:</strong> ").append(escapeHtml(tipoCorteNombre)).append("</p>");
+        
+        if (comentarios != null && !comentarios.trim().isEmpty()) {
+            html.append("<p><strong>💬 Comentarios:</strong> ").append(escapeHtml(comentarios)).append("</p>");
+        }
+        
+        html.append("</div>");
+        html.append("<p style=\"font-size: 16px; color: #2c3e50;\">🎯 Esperamos verle pronto en Papus BarberShop 🎯</p>");
+        html.append("<p>Saludos cordiales,<br>Equipo Papus BarberShop 💈</p>");
+        html.append("</div>");
+        html.append("</body>");
+        html.append("</html>");
+        
+        return html.toString();
+    }
+
+    /**
+     * Escapa caracteres HTML para prevenir XSS.
+     */
+    private String escapeHtml(String text) {
+        if (text == null) {
+            return "";
+        }
+        return text.replace("&", "&amp;")
+                  .replace("<", "&lt;")
+                  .replace(">", "&gt;")
+                  .replace("\"", "&quot;")
+                  .replace("'", "&#39;");
     }
 }
 
