@@ -135,7 +135,7 @@ public class SecurityConfig {
         // Permitir todos los subdominios de Railway
         configuration.setAllowedOriginPatterns(Arrays.asList(
             "https://*.up.railway.app",
-            "http://localhost:4200"  // Para desarrollo local
+            "http://localhost:4200", "https://gestion.papusbarbershop.com"  // Para desarrollo local y producción
         ));
         
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
