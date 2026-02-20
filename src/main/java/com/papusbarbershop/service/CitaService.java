@@ -75,26 +75,27 @@ public class CitaService {
         // la validación se hace en validarDisponibilidad() que excluye citas completadas/canceladas)
         Cita citaGuardada = citaRepository.save(cita);
 
-        // Enviar correos de confirmación de forma ASÍNCRONA (no bloquea la respuesta)
+        // Enviar 3 correos de forma ASÍNCRONA: cliente, barbero y admin
         DateTimeFormatter fechaFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         DateTimeFormatter horaFormatter = DateTimeFormatter.ofPattern("HH:mm");
         
-        logger.info("Preparando envío ASÍNCRONO de correos de confirmación para cita. Correos: {}", 
+        logger.info("Preparando envío ASÍNCRONO de correos (cliente, barbero, admin). Correos cliente: {}", 
                 citaCreateDTO.getCorreosConfirmacion());
         
-        // El envío se ejecuta en segundo plano - NO bloquea la respuesta
         emailAsyncService.enviarConfirmacionCitaAsync(
                 citaCreateDTO.getCorreosConfirmacion(),
                 citaCreateDTO.getNombreCliente(),
+                citaCreateDTO.getCorreoCliente(),
+                citaCreateDTO.getTelefonoCliente(),
                 citaCreateDTO.getFecha().format(fechaFormatter),
                 citaCreateDTO.getHora().format(horaFormatter),
                 barbero.getNombre(),
+                barbero.getCorreo(),
                 tipoCorte.getNombre(),
                 citaCreateDTO.getComentarios()
         );
         
-        // La respuesta se envía inmediatamente, el correo se enviará en segundo plano
-        logger.info("Tarea de envío de correo enviada al pool asíncrono. La respuesta se enviará inmediatamente.");
+        logger.info("Tarea de envío de correos enviada al pool asíncrono.");
 
         return convertirADTO(citaGuardada);
     }

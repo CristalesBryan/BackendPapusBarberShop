@@ -56,21 +56,14 @@ spring.datasource.hikari.minimum-idle=5
 spring.datasource.hikari.idle-timeout=300000
 spring.datasource.hikari.pool-name=PapusBarberShopPool
 
-# ==================== CONFIGURACIÓN DE EMAIL (Amazon SES) ====================
-# Configuración de Amazon SES para envío de correos
-# IMPORTANTE: Configura estas variables de entorno:
-# - AWS_SES_ACCESS_KEY: Access Key ID de AWS IAM con permisos SES
-# - AWS_SES_SECRET_KEY: Secret Access Key de AWS IAM
-# - AWS_SES_REGION: Región de AWS donde está configurado SES (ej: us-east-2)
-# - SES_FROM_EMAIL: Email remitente verificado en Amazon SES
-#
-# NOTA: El email remitente debe estar verificado en Amazon SES antes de usarlo.
-# En el sandbox de SES, solo puedes enviar a emails verificados.
-# Para producción, solicita salir del sandbox en la consola de AWS SES.
-aws.ses.access-key=${AWS_SES_ACCESS_KEY:}
-aws.ses.secret-key=${AWS_SES_SECRET_KEY:}
-aws.ses.region=${AWS_SES_REGION:us-east-2}
-ses.from.email=${SES_FROM_EMAIL:}
+# ==================== CONFIGURACIÓN DE EMAIL (Resend) ====================
+# Resend para envío de correos (https://resend.com)
+# - RESEND_API_KEY: API Key de Resend
+# - RESEND_FROM_EMAIL: Remitente (ej: Citas Papus BarberShop <citas@papusbarbershop.com>)
+# - RESEND_ADMIN_EMAIL: Email del admin para notificaciones de nuevas citas
+resend.api-key=${RESEND_API_KEY:}
+resend.from.email=${RESEND_FROM_EMAIL:Citas Papus BarberShop <citas@papusbarbershop.com>}
+resend.admin.email=${RESEND_ADMIN_EMAIL:}
 
 # ==================== CONFIGURACIÓN DE AMAZON S3 ====================
 # Configuración de AWS S3 para almacenamiento de imágenes
