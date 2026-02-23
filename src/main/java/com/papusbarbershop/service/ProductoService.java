@@ -4,7 +4,6 @@ import com.papusbarbershop.dto.ProductoCreateDTO;
 import com.papusbarbershop.dto.ProductoDTO;
 import com.papusbarbershop.entity.Producto;
 import com.papusbarbershop.exception.RecursoNoEncontradoException;
-import com.papusbarbershop.exception.ValidacionException;
 import com.papusbarbershop.repository.ProductoRepository;
 import com.papusbarbershop.repository.VentaProductoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -135,22 +134,22 @@ public class ProductoService {
 
     /**
      * Elimina un producto por su ID.
-     * No permite eliminar si existen ventas asociadas al producto.
+     * Las ventas que referencian al producto se conservan: se desvincula el producto
+     * y se guarda el nombre del producto en cada venta para mantener el historial.
      *
      * @param id ID del producto a eliminar
      * @throws RecursoNoEncontradoException si no se encuentra el producto
-     * @throws ValidacionException si el producto tiene ventas registradas
      */
     @Transactional
     public void delete(Long id) {
         Producto producto = productoRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto con ID " + id + " no encontrado"));
-        long ventasAsociadas = ventaProductoRepository.countByProductoId(id);
-        if (ventasAsociadas > 0) {
-            throw new ValidacionException(
-                "No se puede eliminar el producto porque tiene ventas registradas. " +
-                "Elimine primero las ventas asociadas en la sección Ventas de productos."
-            );
+        String nombreProducto = producto.getNombre();
+        List<com.papusbarbershop.entity.VentaProducto> ventas = ventaProductoRepository.findByProducto_Id(id);
+        for (com.papusbarbershop.entity.VentaProducto venta : ventas) {
+            venta.setProducto(null);
+            venta.setProductoNombre(nombreProducto);
+            ventaProductoRepository.save(venta);
         }
         productoRepository.delete(producto);
     }

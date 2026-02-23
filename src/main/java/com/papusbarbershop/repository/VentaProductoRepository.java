@@ -66,5 +66,11 @@ public interface VentaProductoRepository extends JpaRepository<VentaProducto, Lo
      */
     @Query("SELECT COUNT(v) FROM VentaProducto v WHERE v.producto.id = :productoId")
     long countByProductoId(@Param("productoId") Long productoId);
+
+    /**
+     * Busca todas las ventas asociadas a un producto (para desvincular antes de eliminar el producto).
+     */
+    @Query("SELECT v FROM VentaProducto v WHERE v.producto.id = :productoId")
+    List<VentaProducto> findByProducto_Id(@Param("productoId") Long productoId);
 }
 
