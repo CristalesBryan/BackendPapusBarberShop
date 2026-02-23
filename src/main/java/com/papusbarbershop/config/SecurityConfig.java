@@ -138,15 +138,15 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        // Orígenes permitidos: Railway, frontend de gestión y sitio público
+        // Orígenes permitidos: producción (gestion y www), Railway, y desarrollo local
         configuration.setAllowedOriginPatterns(Arrays.asList(
+            "https://gestion.papusbarbershop.com",
+            "https://www.papusbarbershop.com",
+            "https://papusbarbershop.com",
             "https://*.up.railway.app",
             "http://localhost:4200",
             "http://localhost:3000",
-            "http://localhost:5173",
-            "https://gestion.papusbarbershop.com",
-            "https://www.papusbarbershop.com",
-            "https://papusbarbershop.com"
+            "http://localhost:5173"
         ));
         
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
