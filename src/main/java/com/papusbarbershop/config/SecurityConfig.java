@@ -96,7 +96,6 @@ public class SecurityConfig {
                         .requestMatchers("/api/s3/exists").permitAll() // Verificación de existencia de archivos
                         .requestMatchers("/api/s3/producto-imagen/**").permitAll() // Referencias de imágenes de productos (público para sincronización)
                         .requestMatchers("/api/s3/producto-imagenes/**").permitAll() // Todas las referencias de imágenes (público para sincronización)
-                        .requestMatchers("/api/s3/delete").hasAnyRole("ADMIN", "BARBERO") // Eliminación requiere autenticación
                         
                         // Proteger endpoints según roles
                         // ADMIN, BARBERO y CESIA: Acceso a servicios y ventas
