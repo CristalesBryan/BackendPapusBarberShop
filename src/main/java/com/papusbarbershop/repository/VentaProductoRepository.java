@@ -57,5 +57,14 @@ public interface VentaProductoRepository extends JpaRepository<VentaProducto, Lo
     java.math.BigDecimal calcularTotalPorBarbero(@Param("barberoId") Long barberoId,
                                                  @Param("fechaInicio") LocalDate fechaInicio,
                                                  @Param("fechaFin") LocalDate fechaFin);
+
+    /**
+     * Cuenta las ventas asociadas a un producto.
+     *
+     * @param productoId ID del producto
+     * @return Cantidad de ventas que referencian al producto
+     */
+    @Query("SELECT COUNT(v) FROM VentaProducto v WHERE v.producto.id = :productoId")
+    long countByProductoId(@Param("productoId") Long productoId);
 }
 

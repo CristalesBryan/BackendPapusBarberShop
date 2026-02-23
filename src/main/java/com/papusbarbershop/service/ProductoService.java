@@ -4,7 +4,9 @@ import com.papusbarbershop.dto.ProductoCreateDTO;
 import com.papusbarbershop.dto.ProductoDTO;
 import com.papusbarbershop.entity.Producto;
 import com.papusbarbershop.exception.RecursoNoEncontradoException;
+import com.papusbarbershop.exception.ValidacionException;
 import com.papusbarbershop.repository.ProductoRepository;
+import com.papusbarbershop.repository.VentaProductoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +24,9 @@ public class ProductoService {
 
     @Autowired
     private ProductoRepository productoRepository;
+
+    @Autowired
+    private VentaProductoRepository ventaProductoRepository;
 
     @Autowired
     private S3Service s3Service;
@@ -130,14 +135,23 @@ public class ProductoService {
 
     /**
      * Elimina un producto por su ID.
-     * 
+     * No permite eliminar si existen ventas asociadas al producto.
+     *
      * @param id ID del producto a eliminar
      * @throws RecursoNoEncontradoException si no se encuentra el producto
+     * @throws ValidacionException si el producto tiene ventas registradas
      */
     @Transactional
     public void delete(Long id) {
         Producto producto = productoRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto con ID " + id + " no encontrado"));
+        long ventasAsociadas = ventaProductoRepository.countByProductoId(id);
+        if (ventasAsociadas > 0) {
+            throw new ValidacionException(
+                "No se puede eliminar el producto porque tiene ventas registradas. " +
+                "Elimine primero las ventas asociadas en la sección Ventas de productos."
+            );
+        }
         productoRepository.delete(producto);
     }
 
