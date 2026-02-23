@@ -16,6 +16,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.http.HttpMethod;
 
 import java.util.Arrays;
 
@@ -70,6 +71,9 @@ public class SecurityConfig {
                 
                 // Configurar reglas de autorización
                 .authorizeHttpRequests(auth -> auth
+                        // Permitir preflight OPTIONS en todas las rutas (necesario para CORS desde gestion.papusbarbershop.com)
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        
                         // Permitir acceso público a endpoints de health check (Railway)
                         .requestMatchers("/actuator/health").permitAll()
                         
@@ -132,10 +136,15 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        // Permitir todos los subdominios de Railway
+        // Orígenes permitidos: Railway, frontend de gestión y sitio público
         configuration.setAllowedOriginPatterns(Arrays.asList(
             "https://*.up.railway.app",
-            "http://localhost:4200", "https://gestion.papusbarbershop.com", "https://www.papusbarbershop.com", "https://papusbarbershop.com"  // Para desarrollo local y producción
+            "http://localhost:4200",
+            "http://localhost:3000",
+            "http://localhost:5173",
+            "https://gestion.papusbarbershop.com",
+            "https://www.papusbarbershop.com",
+            "https://papusbarbershop.com"
         ));
         
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
