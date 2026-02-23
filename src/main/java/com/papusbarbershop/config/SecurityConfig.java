@@ -83,6 +83,9 @@ public class SecurityConfig {
                         // Permitir acceso público al endpoint temporal de reset de contraseña (SOLO DESARROLLO)
                         .requestMatchers("/admin/reset-admin-password").permitAll()
                         
+                        // Solo ADMIN puede cambiar su contraseña (autenticado)
+                        .requestMatchers("/admin/change-password").hasRole("ADMIN")
+                        
                         // Permitir acceso público a endpoints para vista de clientes (sin autenticación)
                         // IMPORTANTE: Las rutas más específicas deben ir ANTES de las generales
                         .requestMatchers("/api/tipos-corte").permitAll() // GET para tipos de corte activos (público)
