@@ -99,15 +99,17 @@ public class SecurityConfig {
                         .requestMatchers("/api/s3/delete").hasAnyRole("ADMIN", "BARBERO") // Eliminación requiere autenticación
                         
                         // Proteger endpoints según roles
-                        // ADMIN y BARBERO: Acceso a servicios y ventas
-                        .requestMatchers("/servicios/**").hasAnyRole("ADMIN", "BARBERO")
-                        .requestMatchers("/ventas-productos/**").hasAnyRole("ADMIN", "BARBERO")
+                        // ADMIN, BARBERO y CESIA: Acceso a servicios y ventas
+                        .requestMatchers("/servicios/**").hasAnyRole("ADMIN", "BARBERO", "CESIA")
+                        .requestMatchers("/ventas-productos/**").hasAnyRole("ADMIN", "BARBERO", "CESIA")
                         
-                        // ADMIN: Acceso completo a operaciones CRUD (POST, PUT, DELETE)
-                        // NOTA: Las rutas GET ya están permitidas públicamente arriba
-                        .requestMatchers("/barberos/**").hasRole("ADMIN") // POST, PUT, DELETE de barberos solo para ADMIN
-                        .requestMatchers("/tipos-corte/**").hasRole("ADMIN") // POST, PUT, DELETE de tipos-corte solo para ADMIN
-                        .requestMatchers("/productos/**").hasRole("ADMIN") // POST, PUT, DELETE de productos solo para ADMIN
+                        // ADMIN y CESIA: Gestión de productos (y catálogo) y S3 para imágenes
+                        .requestMatchers("/productos/**").hasAnyRole("ADMIN", "CESIA")
+                        .requestMatchers("/api/s3/delete").hasAnyRole("ADMIN", "BARBERO", "CESIA")
+                        
+                        // ADMIN: Acceso completo a operaciones CRUD restantes
+                        .requestMatchers("/barberos/**").hasRole("ADMIN")
+                        .requestMatchers("/tipos-corte/**").hasRole("ADMIN")
                         .requestMatchers("/horarios/**").hasRole("ADMIN")
                         .requestMatchers("/citas/**").hasRole("ADMIN")
                         .requestMatchers("/mobiliario-equipo/**").hasRole("ADMIN")
