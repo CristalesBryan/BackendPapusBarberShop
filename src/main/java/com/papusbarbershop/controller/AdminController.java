@@ -37,9 +37,9 @@ public class AdminController {
                     .orElseThrow(() -> new RuntimeException("Usuario admin no encontrado"));
 
             admin.setPassword(passwordEncoder.encode("admin123"));
-            usuarioRepository.save(admin);
+            usuarioRepository.saveAndFlush(admin);
 
-            return ResponseEntity.ok("Contraseña del usuario admin actualizada a 'admin123'. Inicia sesión y cambia la contraseña desde la aplicación.");
+            return ResponseEntity.ok("Contraseña del usuario admin actualizada a 'admin123'. Inicia sesión y cambia la contraseña desde el menú.");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Error al actualizar contraseña: " + e.getMessage());
         }
@@ -74,7 +74,7 @@ public class AdminController {
         }
 
         usuario.setPassword(passwordEncoder.encode(newPassword));
-        usuarioRepository.save(usuario);
+        usuarioRepository.saveAndFlush(usuario);
         return ResponseEntity.ok("Contraseña actualizada correctamente.");
     }
 }
