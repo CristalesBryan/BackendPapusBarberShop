@@ -5,10 +5,12 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import java.math.BigDecimal;
-
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 /**
  * DTO para crear o actualizar un tipo de corte.
  */
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class TipoCorteCreateDTO {
     
     @NotBlank(message = "El nombre es obligatorio")
