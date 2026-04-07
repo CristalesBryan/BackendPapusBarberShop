@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin(origins = "*")
 public class AdminController {
 
+
     @Autowired
     private UsuarioRepository usuarioRepository;
 
