@@ -1,6 +1,8 @@
 package com.papusbarbershop.dto;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * DTO para resúmenes por barbero.
@@ -17,6 +19,8 @@ public class ResumenBarberoDTO {
     private BigDecimal pagoBarbero;
     private Integer cantidadServicios;
     private Integer cantidadVentas;
+    private List<DetalleCorteDTO> detallesCortes = new ArrayList<>();
+    private List<DetalleVentaProductoDTO> detallesVentas = new ArrayList<>();
 
     // ==================== CONSTRUCTORES ====================
 
@@ -103,6 +107,22 @@ public class ResumenBarberoDTO {
 
     public void setTotalComisiones(BigDecimal totalComisiones) {
         this.totalComisiones = totalComisiones;
+    }
+
+    public List<DetalleCorteDTO> getDetallesCortes() {
+        return detallesCortes;
+    }
+
+    public void setDetallesCortes(List<DetalleCorteDTO> detallesCortes) {
+        this.detallesCortes = detallesCortes;
+    }
+
+    public List<DetalleVentaProductoDTO> getDetallesVentas() {
+        return detallesVentas;
+    }
+
+    public void setDetallesVentas(List<DetalleVentaProductoDTO> detallesVentas) {
+        this.detallesVentas = detallesVentas;
     }
 }
 

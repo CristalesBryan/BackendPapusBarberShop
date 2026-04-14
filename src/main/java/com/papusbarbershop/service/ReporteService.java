@@ -3,7 +3,10 @@ package com.papusbarbershop.service;
 import com.papusbarbershop.dto.ResumenBarberoDTO;
 import com.papusbarbershop.dto.ResumenDiarioDTO;
 import com.papusbarbershop.dto.ResumenMensualDTO;
+import com.papusbarbershop.dto.DetalleCorteDTO;
+import com.papusbarbershop.dto.DetalleVentaProductoDTO;
 import com.papusbarbershop.entity.Barbero;
+import com.papusbarbershop.entity.Producto;
 import com.papusbarbershop.repository.BarberoRepository;
 import com.papusbarbershop.repository.ServicioRepository;
 import com.papusbarbershop.repository.VentaProductoRepository;
@@ -176,6 +179,15 @@ public class ReporteService {
                     .filter(s -> !s.getFecha().isBefore(fechaInicio) && !s.getFecha().isAfter(fechaFin))
                     .toList();
             resumen.setCantidadServicios(servicios.size());
+            resumen.setDetallesCortes(servicios.stream().map(servicio -> {
+                DetalleCorteDTO detalle = new DetalleCorteDTO();
+                detalle.setFecha(servicio.getFecha());
+                detalle.setHora(servicio.getHora());
+                detalle.setTipoCorte(servicio.getTipoCorte());
+                detalle.setMetodoPago(servicio.getMetodoPago());
+                detalle.setPrecio(servicio.getPrecio());
+                return detalle;
+            }).toList());
 
             // Calcular total de ventas
             BigDecimal totalVentas = ventaProductoRepository.calcularTotalPorBarbero(
@@ -188,6 +200,19 @@ public class ReporteService {
                     .filter(v -> !v.getFecha().isBefore(fechaInicio) && !v.getFecha().isAfter(fechaFin))
                     .toList();
             resumen.setCantidadVentas(ventas.size());
+            resumen.setDetallesVentas(ventas.stream().map(venta -> {
+                DetalleVentaProductoDTO detalle = new DetalleVentaProductoDTO();
+                detalle.setFecha(venta.getFecha());
+                detalle.setHora(venta.getHora());
+                Producto producto = venta.getProducto();
+                String nombreProducto = producto != null ? producto.getNombre() : venta.getProductoNombre();
+                detalle.setProducto(nombreProducto != null ? nombreProducto : "Producto eliminado");
+                detalle.setCantidad(venta.getCantidad());
+                detalle.setPrecioUnitario(venta.getPrecioUnitario());
+                detalle.setImporte(venta.getImporte());
+                detalle.setMetodoPago(venta.getMetodoPago());
+                return detalle;
+            }).toList());
 
             // Calcular total de comisiones por barbero
             // Comisión = comision del producto * cantidad vendida (0 si el producto fue eliminado)
