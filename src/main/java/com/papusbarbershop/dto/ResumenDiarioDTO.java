@@ -13,7 +13,7 @@ public class ResumenDiarioDTO {
     private BigDecimal totalServicios;
     private BigDecimal totalVentas;
     private BigDecimal totalComisiones;
-    private BigDecimal totalGeneral;
+    private BigDecimal totalGeneral;`r`n    private BigDecimal totalDescuentosAplicados;
     /** Suma de lo que queda para la barbería por cada barbero (después de pagos) */
     private BigDecimal totalGananciaBarberia;
     private Integer cantidadServicios;
@@ -59,7 +59,7 @@ public class ResumenDiarioDTO {
         this.totalGeneral = totalGeneral;
     }
 
-    public BigDecimal getTotalGananciaBarberia() {
+    public BigDecimal getTotalDescuentosAplicados() {`r`n        return totalDescuentosAplicados;`r`n    }`r`n`r`n    public void setTotalDescuentosAplicados(BigDecimal totalDescuentosAplicados) {`r`n        this.totalDescuentosAplicados = totalDescuentosAplicados;`r`n    }`r`n`r`n    public BigDecimal getTotalGananciaBarberia() {
         return totalGananciaBarberia;
     }
 

@@ -10,12 +10,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Servicio para la gestión de servicios (cortes).
+ * Servicio para la gesti�n de servicios (cortes).
  */
 @Service
 public class ServicioService {
@@ -26,15 +28,13 @@ public class ServicioService {
     @Autowired
     private BarberoService barberoService;
 
-    /**
-     * Crea un nuevo servicio.
-     * 
-     * @param servicioCreateDTO DTO con los datos del servicio
-     * @return Servicio creado
-     */
     @Transactional
     public ServicioDTO create(ServicioCreateDTO servicioCreateDTO) {
         Barbero barbero = barberoService.findEntityById(servicioCreateDTO.getBarberoId());
+
+        BigDecimal precioOriginal = servicioCreateDTO.getPrecio() != null ? servicioCreateDTO.getPrecio() : BigDecimal.ZERO;
+        BigDecimal descuentoPorcentaje = normalizarDescuento(servicioCreateDTO.getDescuentoPorcentaje());
+        BigDecimal precioFinal = aplicarDescuento(precioOriginal, descuentoPorcentaje);
 
         Servicio servicio = new Servicio();
         servicio.setFecha(servicioCreateDTO.getFecha());
@@ -42,80 +42,55 @@ public class ServicioService {
         servicio.setBarbero(barbero);
         servicio.setTipoCorte(servicioCreateDTO.getTipoCorte());
         servicio.setMetodoPago(servicioCreateDTO.getMetodoPago());
-        servicio.setPrecio(servicioCreateDTO.getPrecio());
+        servicio.setPrecioOriginal(precioOriginal.setScale(2, RoundingMode.HALF_UP));
+        servicio.setDescuentoPorcentaje(descuentoPorcentaje);
+        servicio.setPrecio(precioFinal);
 
         Servicio saved = servicioRepository.save(servicio);
         return convertToDTO(saved);
     }
 
-    /**
-     * Obtiene todos los servicios.
-     * 
-     * @return Lista de servicios
-     */
     public List<ServicioDTO> findAll() {
         return servicioRepository.findAll().stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Obtiene todos los servicios de una fecha específica.
-     * 
-     * @param fecha Fecha a buscar
-     * @return Lista de servicios
-     */
     public List<ServicioDTO> findByFecha(LocalDate fecha) {
         return servicioRepository.findByFecha(fecha).stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Obtiene un servicio por su ID.
-     * 
-     * @param id ID del servicio
-     * @return Servicio encontrado
-     * @throws RecursoNoEncontradoException si no se encuentra el servicio
-     */
     public ServicioDTO findById(Long id) {
         Servicio servicio = servicioRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Servicio con ID " + id + " no encontrado"));
         return convertToDTO(servicio);
     }
 
-    /**
-     * Actualiza un servicio existente.
-     * 
-     * @param id ID del servicio
-     * @param servicioCreateDTO DTO con los datos actualizados
-     * @return Servicio actualizado
-     * @throws RecursoNoEncontradoException si no se encuentra el servicio
-     */
     @Transactional
     public ServicioDTO update(Long id, ServicioCreateDTO servicioCreateDTO) {
         Servicio servicio = servicioRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Servicio con ID " + id + " no encontrado"));
 
         Barbero barbero = barberoService.findEntityById(servicioCreateDTO.getBarberoId());
+        BigDecimal precioOriginal = servicioCreateDTO.getPrecio() != null ? servicioCreateDTO.getPrecio() : BigDecimal.ZERO;
+        BigDecimal descuentoPorcentaje = normalizarDescuento(servicioCreateDTO.getDescuentoPorcentaje());
+        BigDecimal precioFinal = aplicarDescuento(precioOriginal, descuentoPorcentaje);
 
         servicio.setFecha(servicioCreateDTO.getFecha());
         servicio.setHora(servicioCreateDTO.getHora());
         servicio.setBarbero(barbero);
         servicio.setTipoCorte(servicioCreateDTO.getTipoCorte());
         servicio.setMetodoPago(servicioCreateDTO.getMetodoPago());
-        servicio.setPrecio(servicioCreateDTO.getPrecio());
+        servicio.setPrecioOriginal(precioOriginal.setScale(2, RoundingMode.HALF_UP));
+        servicio.setDescuentoPorcentaje(descuentoPorcentaje);
+        servicio.setPrecio(precioFinal);
 
         Servicio saved = servicioRepository.save(servicio);
         return convertToDTO(saved);
     }
 
-    /**
-     * Elimina un servicio por su ID.
-     * 
-     * @param id ID del servicio a eliminar
-     * @throws RecursoNoEncontradoException si no se encuentra el servicio
-     */
     @Transactional
     public void delete(Long id) {
         Servicio servicio = servicioRepository.findById(id)
@@ -123,12 +98,6 @@ public class ServicioService {
         servicioRepository.delete(servicio);
     }
 
-    /**
-     * Convierte una entidad Servicio a DTO.
-     * 
-     * @param servicio Entidad Servicio
-     * @return DTO de Servicio
-     */
     private ServicioDTO convertToDTO(Servicio servicio) {
         return new ServicioDTO(
                 servicio.getId(),
@@ -138,8 +107,24 @@ public class ServicioService {
                 servicio.getBarbero().getNombre(),
                 servicio.getTipoCorte(),
                 servicio.getMetodoPago(),
+                servicio.getPrecioOriginal(),
+                servicio.getDescuentoPorcentaje(),
                 servicio.getPrecio()
         );
     }
-}
 
+    private BigDecimal normalizarDescuento(BigDecimal descuento) {
+        if (descuento == null || descuento.compareTo(BigDecimal.ZERO) < 0) {
+            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        }
+        return descuento.setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private BigDecimal aplicarDescuento(BigDecimal monto, BigDecimal descuentoPorcentaje) {
+        BigDecimal factor = BigDecimal.ONE.subtract(descuentoPorcentaje.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP));
+        if (factor.compareTo(BigDecimal.ZERO) < 0) {
+            factor = BigDecimal.ZERO;
+        }
+        return monto.multiply(factor).setScale(2, RoundingMode.HALF_UP);
+    }
+}

@@ -1,13 +1,14 @@
 package com.papusbarbershop.dto;
 
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotNull;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
 /**
- * DTO para crear un nuevo servicio.
+ * DTO para crear o actualizar un servicio.
  */
 public class ServicioCreateDTO {
 
@@ -23,19 +24,18 @@ public class ServicioCreateDTO {
     @NotNull(message = "El tipo de corte es obligatorio")
     private String tipoCorte;
 
-    @NotNull(message = "El mÃ©todo de pago es obligatorio")
+    @NotNull(message = "El método de pago es obligatorio")
     private String metodoPago;
 
-    @NotNull(message = "El precio es obligatorio")
-    @DecimalMin(value = "0.0", message = "El precio debe ser mayor o igual a 0")
+    @NotNull(message = "El precio base es obligatorio")
+    @DecimalMin(value = "0.0", message = "El precio base debe ser mayor o igual a 0")
     private BigDecimal precio;
 
-    // ==================== CONSTRUCTORES ====================
+    @DecimalMin(value = "0.0", message = "El descuento debe ser mayor o igual a 0")
+    private BigDecimal descuentoPorcentaje;
 
     public ServicioCreateDTO() {
     }
-
-    // ==================== GETTERS Y SETTERS ====================
 
     public LocalDate getFecha() {
         return fecha;
@@ -84,5 +84,12 @@ public class ServicioCreateDTO {
     public void setPrecio(BigDecimal precio) {
         this.precio = precio;
     }
-}
 
+    public BigDecimal getDescuentoPorcentaje() {
+        return descuentoPorcentaje;
+    }
+
+    public void setDescuentoPorcentaje(BigDecimal descuentoPorcentaje) {
+        this.descuentoPorcentaje = descuentoPorcentaje;
+    }
+}
