@@ -52,7 +52,7 @@ public interface VentaProductoRepository extends JpaRepository<VentaProducto, Lo
      * @param fechaFin Fecha de fin
      * @return Total de ventas
      */
-    @Query("SELECT COALESCE(SUM(v.importe), 0) FROM VentaProducto v WHERE v.barbero.id = :barberoId " +
+    @Query("SELECT COALESCE(SUM(COALESCE(v.importe, 0)), 0) FROM VentaProducto v WHERE v.barbero.id = :barberoId " +
            "AND v.fecha BETWEEN :fechaInicio AND :fechaFin")
     java.math.BigDecimal calcularTotalPorBarbero(@Param("barberoId") Long barberoId,
                                                  @Param("fechaInicio") LocalDate fechaInicio,

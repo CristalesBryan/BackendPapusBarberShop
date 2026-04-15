@@ -78,4 +78,18 @@ public class Servicio {
     public void setDescuentoPorcentaje(BigDecimal descuentoPorcentaje) { this.descuentoPorcentaje = descuentoPorcentaje; }
     public BigDecimal getPrecio() { return precio; }
     public void setPrecio(BigDecimal precio) { this.precio = precio; }
+
+    /** Tras cargar desde BD: filas antiguas o migraciones pueden dejar null. */
+    @PostLoad
+    void normalizarMontos() {
+        if (precioOriginal == null) {
+            precioOriginal = BigDecimal.ZERO;
+        }
+        if (descuentoPorcentaje == null) {
+            descuentoPorcentaje = BigDecimal.ZERO;
+        }
+        if (precio == null) {
+            precio = BigDecimal.ZERO;
+        }
+    }
 }

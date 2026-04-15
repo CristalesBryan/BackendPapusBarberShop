@@ -3,6 +3,8 @@ package com.papusbarbershop.controller;
 import com.papusbarbershop.dto.ResumenDiarioDTO;
 import com.papusbarbershop.dto.ResumenMensualDTO;
 import com.papusbarbershop.service.ReporteService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +21,8 @@ import java.time.YearMonth;
 @CrossOrigin(origins = "*")
 public class ReporteController {
 
+    private static final Logger log = LoggerFactory.getLogger(ReporteController.class);
+
     @Autowired
     private ReporteService reporteService;
 
@@ -34,8 +38,13 @@ public class ReporteController {
     public ResponseEntity<ResumenDiarioDTO> getResumenDiario(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha) {
         LocalDate dia = fecha != null ? fecha : LocalDate.now();
-        ResumenDiarioDTO resumen = reporteService.generarResumenDiario(dia);
-        return ResponseEntity.ok(resumen);
+        try {
+            ResumenDiarioDTO resumen = reporteService.generarResumenDiario(dia);
+            return ResponseEntity.ok(resumen);
+        } catch (Exception e) {
+            log.error("GET /reportes/diario fecha={}", dia, e);
+            throw e;
+        }
     }
 
     /**
@@ -50,8 +59,13 @@ public class ReporteController {
         if (mes == null) {
             mes = YearMonth.now();
         }
-        ResumenMensualDTO resumen = reporteService.generarResumenMensual(mes);
-        return ResponseEntity.ok(resumen);
+        try {
+            ResumenMensualDTO resumen = reporteService.generarResumenMensual(mes);
+            return ResponseEntity.ok(resumen);
+        } catch (Exception e) {
+            log.error("GET /reportes/mensual mes={}", mes, e);
+            throw e;
+        }
     }
 
     /**

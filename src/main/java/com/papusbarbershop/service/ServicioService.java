@@ -6,6 +6,7 @@ import com.papusbarbershop.entity.Barbero;
 import com.papusbarbershop.entity.Servicio;
 import com.papusbarbershop.exception.RecursoNoEncontradoException;
 import com.papusbarbershop.repository.ServicioRepository;
+import com.papusbarbershop.util.BigDecimalUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -107,9 +108,9 @@ public class ServicioService {
                 servicio.getBarbero().getNombre(),
                 servicio.getTipoCorte(),
                 servicio.getMetodoPago(),
-                servicio.getPrecioOriginal(),
-                servicio.getDescuentoPorcentaje(),
-                servicio.getPrecio()
+                BigDecimalUtil.nvl(servicio.getPrecioOriginal()),
+                BigDecimalUtil.nvl(servicio.getDescuentoPorcentaje()),
+                BigDecimalUtil.nvl(servicio.getPrecio())
         );
     }
 

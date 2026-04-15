@@ -110,4 +110,20 @@ public class VentaProducto {
     public void setStockDespues(Integer stockDespues) { this.stockDespues = stockDespues; }
     public String getMetodoPago() { return metodoPago; }
     public void setMetodoPago(String metodoPago) { this.metodoPago = metodoPago; }
+
+    @PostLoad
+    void normalizarMontos() {
+        if (precioUnitario == null) {
+            precioUnitario = BigDecimal.ZERO;
+        }
+        if (importeOriginal == null) {
+            importeOriginal = BigDecimal.ZERO;
+        }
+        if (descuentoPorcentaje == null) {
+            descuentoPorcentaje = BigDecimal.ZERO;
+        }
+        if (importe == null) {
+            importe = BigDecimal.ZERO;
+        }
+    }
 }

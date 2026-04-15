@@ -131,16 +131,13 @@ public class SecurityConfig {
     }
 
     /**
-     * Configura la fuente de configuración CORS para permitir comunicación
-     * entre el frontend y el backend desde diferentes orígenes.
-     * 
-     * @return CorsConfigurationSource configurado
+     * CORS global para todas las rutas (/**). Frontend de gestión en producción y orígenes auxiliares.
+     * Un solo origen (no "*") cuando allowCredentials=true, según el estándar CORS.
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        
-        // Orígenes permitidos: producción (gestion y www), Railway, y desarrollo local
+
         configuration.setAllowedOriginPatterns(Arrays.asList(
             "https://gestion.papusbarbershop.com",
             "https://www.papusbarbershop.com",
@@ -150,12 +147,13 @@ public class SecurityConfig {
             "http://localhost:3000",
             "http://localhost:5173"
         ));
-        
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
         configuration.setExposedHeaders(Arrays.asList("Authorization"));
-        
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;

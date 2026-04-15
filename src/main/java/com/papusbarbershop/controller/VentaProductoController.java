@@ -4,6 +4,8 @@ import com.papusbarbershop.dto.VentaProductoCreateDTO;
 import com.papusbarbershop.dto.VentaProductoDTO;
 import com.papusbarbershop.service.VentaProductoService;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -20,6 +22,8 @@ import java.util.List;
 @RequestMapping("/ventas-productos")
 @CrossOrigin(origins = "*")
 public class VentaProductoController {
+
+    private static final Logger log = LoggerFactory.getLogger(VentaProductoController.class);
 
     @Autowired
     private VentaProductoService ventaProductoService;
@@ -43,8 +47,13 @@ public class VentaProductoController {
      */
     @GetMapping
     public ResponseEntity<List<VentaProductoDTO>> getAllVentas() {
-        List<VentaProductoDTO> ventas = ventaProductoService.findAll();
-        return ResponseEntity.ok(ventas);
+        try {
+            List<VentaProductoDTO> ventas = ventaProductoService.findAll();
+            return ResponseEntity.ok(ventas);
+        } catch (Exception e) {
+            log.error("GET /ventas-productos", e);
+            throw e;
+        }
     }
 
     /**

@@ -52,7 +52,7 @@ public interface ServicioRepository extends JpaRepository<Servicio, Long> {
      * @param fechaFin Fecha de fin
      * @return Total de servicios
      */
-    @Query("SELECT COALESCE(SUM(s.precio), 0) FROM Servicio s WHERE s.barbero.id = :barberoId " +
+    @Query("SELECT COALESCE(SUM(COALESCE(s.precio, 0)), 0) FROM Servicio s WHERE s.barbero.id = :barberoId " +
            "AND s.fecha BETWEEN :fechaInicio AND :fechaFin")
     java.math.BigDecimal calcularTotalPorBarbero(@Param("barberoId") Long barberoId,
                                                   @Param("fechaInicio") LocalDate fechaInicio,

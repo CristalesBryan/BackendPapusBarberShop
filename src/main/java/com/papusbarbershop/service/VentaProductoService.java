@@ -8,6 +8,9 @@ import com.papusbarbershop.entity.VentaProducto;
 import com.papusbarbershop.exception.RecursoNoEncontradoException;
 import com.papusbarbershop.exception.ValidacionException;
 import com.papusbarbershop.repository.VentaProductoRepository;
+import com.papusbarbershop.util.BigDecimalUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +23,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class VentaProductoService {
+
+    private static final Logger log = LoggerFactory.getLogger(VentaProductoService.class);
 
     @Autowired
     private VentaProductoRepository ventaProductoRepository;
@@ -36,13 +41,13 @@ public class VentaProductoService {
         Producto producto = productoService.findEntityById(ventaCreateDTO.getProductoId());
 
         Integer stockAntes = producto.getStock();
-        if (stockAntes < ventaCreateDTO.getCantidad()) {
+        if (BigDecimalUtil.nvlInt(stockAntes) < BigDecimalUtil.nvlInt(ventaCreateDTO.getCantidad())) {
             throw new ValidacionException("Stock insuficiente. Stock disponible: " + stockAntes +
                     ", cantidad solicitada: " + ventaCreateDTO.getCantidad());
         }
 
-        BigDecimal precioUnitario = producto.getPrecioVenta();
-        BigDecimal importeOriginal = precioUnitario.multiply(BigDecimal.valueOf(ventaCreateDTO.getCantidad())).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal precioUnitario = BigDecimalUtil.nvl(producto.getPrecioVenta());
+        BigDecimal importeOriginal = precioUnitario.multiply(BigDecimal.valueOf(BigDecimalUtil.nvlInt(ventaCreateDTO.getCantidad()))).setScale(2, RoundingMode.HALF_UP);
         BigDecimal descuentoPorcentaje = normalizarDescuento(ventaCreateDTO.getDescuentoPorcentaje());
         BigDecimal importeFinal = aplicarDescuento(importeOriginal, descuentoPorcentaje);
 
@@ -70,9 +75,14 @@ public class VentaProductoService {
     }
 
     public List<VentaProductoDTO> findAll() {
-        return ventaProductoRepository.findAll().stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+        try {
+            return ventaProductoRepository.findAll().stream()
+                    .map(this::convertToDTO)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("findAll ventas-productos", e);
+            throw e;
+        }
     }
 
     public List<VentaProductoDTO> findByFecha(LocalDate fecha) {
@@ -132,8 +142,8 @@ public class VentaProductoService {
             venta.setStockDespues(stockDespues);
         }
 
-        BigDecimal precioUnitario = producto.getPrecioVenta();
-        BigDecimal importeOriginal = precioUnitario.multiply(BigDecimal.valueOf(ventaCreateDTO.getCantidad())).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal precioUnitario = BigDecimalUtil.nvl(producto.getPrecioVenta());
+        BigDecimal importeOriginal = precioUnitario.multiply(BigDecimal.valueOf(BigDecimalUtil.nvlInt(ventaCreateDTO.getCantidad()))).setScale(2, RoundingMode.HALF_UP);
         BigDecimal descuentoPorcentaje = normalizarDescuento(ventaCreateDTO.getDescuentoPorcentaje());
         BigDecimal importeFinal = aplicarDescuento(importeOriginal, descuentoPorcentaje);
 
@@ -161,7 +171,7 @@ public class VentaProductoService {
         if (venta.getProducto() != null) {
             Producto producto = venta.getProducto();
             Integer stockActual = producto.getStock();
-            Integer stockRestaurado = stockActual + venta.getCantidad();
+            Integer stockRestaurado = BigDecimalUtil.nvlInt(stockActual) + BigDecimalUtil.nvlInt(venta.getCantidad());
             producto.setStock(stockRestaurado);
             productoService.update(producto.getId(), convertProductoToDTO(producto));
         }
@@ -178,11 +188,11 @@ public class VentaProductoService {
         dto.setBarberoNombre(venta.getBarbero().getNombre());
         dto.setProductoId(venta.getProducto() != null ? venta.getProducto().getId() : null);
         dto.setProductoNombre(venta.getProducto() != null ? venta.getProducto().getNombre() : (venta.getProductoNombre() != null ? venta.getProductoNombre() : "Producto eliminado"));
-        dto.setCantidad(venta.getCantidad());
-        dto.setPrecioUnitario(venta.getPrecioUnitario());
-        dto.setImporteOriginal(venta.getImporteOriginal());
-        dto.setDescuentoPorcentaje(venta.getDescuentoPorcentaje());
-        dto.setImporte(venta.getImporte());
+        dto.setCantidad(BigDecimalUtil.nvlInt(venta.getCantidad()));
+        dto.setPrecioUnitario(BigDecimalUtil.nvl(venta.getPrecioUnitario()));
+        dto.setImporteOriginal(BigDecimalUtil.nvl(venta.getImporteOriginal()));
+        dto.setDescuentoPorcentaje(BigDecimalUtil.nvl(venta.getDescuentoPorcentaje()));
+        dto.setImporte(BigDecimalUtil.nvl(venta.getImporte()));
         dto.setStockAntes(venta.getStockAntes());
         dto.setStockDespues(venta.getStockDespues());
         dto.setMetodoPago(venta.getMetodoPago());
