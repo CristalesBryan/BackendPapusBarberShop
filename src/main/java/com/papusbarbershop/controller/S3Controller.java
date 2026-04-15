@@ -2,6 +2,7 @@ package com.papusbarbershop.controller;
 
 import com.papusbarbershop.service.ProductoService;
 import com.papusbarbershop.service.S3Service;
+import com.papusbarbershop.exception.RecursoNoEncontradoException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -261,8 +262,10 @@ public class S3Controller {
                     try {
                         productoService.actualizarS3Key(productoId, s3Key);
                         count++;
+                    } catch (RecursoNoEncontradoException e) {
+                        logger.warn("Sincronización S3 omitida: producto {} no existe en BD. s3Key={}", productoId, s3Key);
                     } catch (Exception e) {
-                        System.err.println("Error al actualizar s3Key para producto " + productoId + ": " + e.getMessage());
+                        logger.error("Error al actualizar s3Key para producto {} durante sincronización: {}", productoId, e.getMessage(), e);
                     }
                 }
             }
