@@ -84,6 +84,7 @@ public class ReporteService {
         // Resumen por barbero
         List<ResumenBarberoDTO> resumenBarberos = calcularResumenBarberos(fecha, fecha);
         resumen.setResumenBarberos(resumenBarberos);
+        resumen.setTotalGananciaBarberia(sumarGananciaBarberia(resumenBarberos));
 
         return resumen;
     }
@@ -137,6 +138,7 @@ public class ReporteService {
         // Resumen por barbero
         List<ResumenBarberoDTO> resumenBarberos = calcularResumenBarberos(fechaInicio, fechaFin);
         resumen.setResumenBarberos(resumenBarberos);
+        resumen.setTotalGananciaBarberia(sumarGananciaBarberia(resumenBarberos));
 
         return resumen;
     }
@@ -239,10 +241,22 @@ public class ReporteService {
             BigDecimal pagoBarbero = pagoPorServicios.add(totalComisiones).setScale(2, RoundingMode.HALF_UP);
             resumen.setPagoBarbero(pagoBarbero);
 
+            // Lo que queda para la barbería: total generado menos lo que se paga al barbero
+            BigDecimal gananciaBarberia = totalGenerado.subtract(pagoBarbero).setScale(2, RoundingMode.HALF_UP);
+            resumen.setGananciaBarberia(gananciaBarberia);
+
             resumenBarberos.add(resumen);
         }
 
         return resumenBarberos;
+    }
+
+    private BigDecimal sumarGananciaBarberia(List<ResumenBarberoDTO> resumenBarberos) {
+        return resumenBarberos.stream()
+                .map(ResumenBarberoDTO::getGananciaBarberia)
+                .filter(g -> g != null)
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .setScale(2, RoundingMode.HALF_UP);
     }
 }
 

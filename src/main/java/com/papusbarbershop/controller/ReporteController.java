@@ -24,12 +24,17 @@ public class ReporteController {
 
     /**
      * Obtiene el resumen diario.
-     * 
+     * Si se envía {@code fecha} (YYYY-MM-DD), se usa esa fecha en el calendario del negocio (navegador).
+     * Si no, se usa la fecha actual del servidor (puede desfasarse respecto al usuario en UTC).
+     *
+     * @param fecha opcional, día a consultar
      * @return Resumen diario
      */
     @GetMapping("/diario")
-    public ResponseEntity<ResumenDiarioDTO> getResumenDiario() {
-        ResumenDiarioDTO resumen = reporteService.generarResumenDiario(LocalDate.now());
+    public ResponseEntity<ResumenDiarioDTO> getResumenDiario(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha) {
+        LocalDate dia = fecha != null ? fecha : LocalDate.now();
+        ResumenDiarioDTO resumen = reporteService.generarResumenDiario(dia);
         return ResponseEntity.ok(resumen);
     }
 

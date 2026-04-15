@@ -14,6 +14,8 @@ public class ResumenMensualDTO {
     private BigDecimal totalVentas;
     private BigDecimal totalComisiones;
     private BigDecimal totalGeneral;
+    /** Suma de lo que queda para la barbería por cada barbero (después de pagos) */
+    private BigDecimal totalGananciaBarberia;
     private Integer cantidadServicios;
     private Integer cantidadVentas;
     private List<ResumenBarberoDTO> resumenBarberos;
@@ -55,6 +57,14 @@ public class ResumenMensualDTO {
 
     public void setTotalGeneral(BigDecimal totalGeneral) {
         this.totalGeneral = totalGeneral;
+    }
+
+    public BigDecimal getTotalGananciaBarberia() {
+        return totalGananciaBarberia;
+    }
+
+    public void setTotalGananciaBarberia(BigDecimal totalGananciaBarberia) {
+        this.totalGananciaBarberia = totalGananciaBarberia;
     }
 
     public Integer getCantidadServicios() {

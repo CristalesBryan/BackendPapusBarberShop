@@ -17,6 +17,8 @@ public class ResumenBarberoDTO {
     private BigDecimal totalComisiones;
     private BigDecimal totalGenerado;
     private BigDecimal pagoBarbero;
+    /** Lo que queda para la barbería: totalGenerado - pagoBarbero */
+    private BigDecimal gananciaBarberia;
     private Integer cantidadServicios;
     private Integer cantidadVentas;
     private List<DetalleCorteDTO> detallesCortes = new ArrayList<>();
@@ -83,6 +85,14 @@ public class ResumenBarberoDTO {
 
     public void setPagoBarbero(BigDecimal pagoBarbero) {
         this.pagoBarbero = pagoBarbero;
+    }
+
+    public BigDecimal getGananciaBarberia() {
+        return gananciaBarberia;
+    }
+
+    public void setGananciaBarberia(BigDecimal gananciaBarberia) {
+        this.gananciaBarberia = gananciaBarberia;
     }
 
     public Integer getCantidadServicios() {
