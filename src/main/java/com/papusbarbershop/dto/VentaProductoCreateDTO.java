@@ -29,7 +29,7 @@ public class VentaProductoCreateDTO {
     @Min(value = 1, message = "La cantidad debe ser mayor a 0")
     private Integer cantidad;
 
-    @NotNull(message = "El método de pago es obligatorio")
+    @NotNull(message = "El metodo de pago es obligatorio")
     private String metodoPago;
 
     @DecimalMin(value = "0.0", message = "El descuento debe ser mayor o igual a 0")

@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Servicio para la gestión de servicios (cortes).
+ * Servicio para la gestion de servicios (cortes).
  */
 @Service
 public class ServicioService {

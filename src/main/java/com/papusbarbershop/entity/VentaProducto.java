@@ -71,11 +71,11 @@ public class VentaProducto {
     @Column(name = "stock_antes", nullable = false)
     private Integer stockAntes;
 
-    @NotNull(message = "El stock después es obligatorio")
+    @NotNull(message = "El stock despues es obligatorio")
     @Column(name = "stock_despues", nullable = false)
     private Integer stockDespues;
 
-    @NotBlank(message = "El método de pago es obligatorio")
+    @NotBlank(message = "El metodo de pago es obligatorio")
     @Column(name = "metodo_pago", nullable = false, length = 50)
     private String metodoPago;
 

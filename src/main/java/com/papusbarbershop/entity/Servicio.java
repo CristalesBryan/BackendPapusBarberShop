@@ -10,7 +10,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 
 /**
- * Entidad que representa un servicio (corte) realizado en la barbería.
+ * Entidad que representa un servicio (corte) realizado en la barberia.
  */
 @Entity
 @Table(name = "servicios")
@@ -38,7 +38,7 @@ public class Servicio {
     @Column(name = "tipo_corte", nullable = false, length = 100)
     private String tipoCorte;
 
-    @NotBlank(message = "El método de pago es obligatorio")
+    @NotBlank(message = "El metodo de pago es obligatorio")
     @Column(name = "metodo_pago", nullable = false, length = 50)
     private String metodoPago;
 

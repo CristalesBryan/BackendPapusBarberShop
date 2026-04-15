@@ -24,7 +24,7 @@ public class ServicioCreateDTO {
     @NotNull(message = "El tipo de corte es obligatorio")
     private String tipoCorte;
 
-    @NotNull(message = "El método de pago es obligatorio")
+    @NotNull(message = "El metodo de pago es obligatorio")
     private String metodoPago;
 
     @NotNull(message = "El precio base es obligatorio")

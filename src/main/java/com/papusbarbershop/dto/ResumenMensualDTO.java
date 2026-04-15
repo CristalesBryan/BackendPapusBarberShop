@@ -5,7 +5,7 @@ import java.time.YearMonth;
 import java.util.List;
 
 /**
- * DTO para resúmenes mensuales.
+ * DTO para resumenes mensuales.
  */
 public class ResumenMensualDTO {
 
@@ -13,8 +13,9 @@ public class ResumenMensualDTO {
     private BigDecimal totalServicios;
     private BigDecimal totalVentas;
     private BigDecimal totalComisiones;
-    private BigDecimal totalGeneral;`r`n    private BigDecimal totalDescuentosAplicados;
-    /** Suma de lo que queda para la barbería por cada barbero (después de pagos) */
+    private BigDecimal totalGeneral;
+    private BigDecimal totalDescuentosAplicados;
+    /** Suma de lo que queda para la barberia por cada barbero (despues de pagos) */
     private BigDecimal totalGananciaBarberia;
     private Integer cantidadServicios;
     private Integer cantidadVentas;
@@ -59,7 +60,15 @@ public class ResumenMensualDTO {
         this.totalGeneral = totalGeneral;
     }
 
-    public BigDecimal getTotalDescuentosAplicados() {`r`n        return totalDescuentosAplicados;`r`n    }`r`n`r`n    public void setTotalDescuentosAplicados(BigDecimal totalDescuentosAplicados) {`r`n        this.totalDescuentosAplicados = totalDescuentosAplicados;`r`n    }`r`n`r`n    public BigDecimal getTotalGananciaBarberia() {
+    public BigDecimal getTotalDescuentosAplicados() {
+        return totalDescuentosAplicados;
+    }
+
+    public void setTotalDescuentosAplicados(BigDecimal totalDescuentosAplicados) {
+        this.totalDescuentosAplicados = totalDescuentosAplicados;
+    }
+
+    public BigDecimal getTotalGananciaBarberia() {
         return totalGananciaBarberia;
     }
 

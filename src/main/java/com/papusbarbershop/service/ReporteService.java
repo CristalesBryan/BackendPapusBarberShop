@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Servicio para la generación de reportes y resúmenes.
+ * Servicio para la generacion de reportes y resumenes.
  */
 @Service
 public class ReporteService {
