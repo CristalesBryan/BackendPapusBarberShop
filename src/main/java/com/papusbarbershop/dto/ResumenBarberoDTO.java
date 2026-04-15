@@ -13,11 +13,14 @@ public class ResumenBarberoDTO {
     private String barberoNombre;
     private BigDecimal porcentajeServicio;
     private BigDecimal totalServicios;
+    /** Suma de importe_original de ventas (antes de descuento). */
+    private BigDecimal totalVentasImporteOriginal;
+    /** Suma de importe final de ventas (con descuento aplicado). */
     private BigDecimal totalVentas;
     private BigDecimal totalComisiones;
     private BigDecimal totalGenerado;
     private BigDecimal pagoBarbero;
-    /** Lo que queda para la barbería: totalGenerado - pagoBarbero */
+    /** Lo que queda para la barbería por servicios (totalServicios - pago % servicios). */
     private BigDecimal gananciaBarberia;
     private Integer cantidadServicios;
     private Integer cantidadVentas;
@@ -61,6 +64,14 @@ public class ResumenBarberoDTO {
 
     public void setTotalServicios(BigDecimal totalServicios) {
         this.totalServicios = totalServicios;
+    }
+
+    public BigDecimal getTotalVentasImporteOriginal() {
+        return totalVentasImporteOriginal;
+    }
+
+    public void setTotalVentasImporteOriginal(BigDecimal totalVentasImporteOriginal) {
+        this.totalVentasImporteOriginal = totalVentasImporteOriginal;
     }
 
     public BigDecimal getTotalVentas() {

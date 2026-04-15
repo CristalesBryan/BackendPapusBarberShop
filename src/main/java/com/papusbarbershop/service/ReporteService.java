@@ -193,13 +193,20 @@ public class ReporteService {
                 return detalle;
             }).toList());
 
-            BigDecimal totalVentas = BigDecimalUtil.nvl(ventaProductoRepository.calcularTotalPorBarbero(barbero.getId(), fechaInicio, fechaFin));
-            resumen.setTotalVentas(totalVentas);
-
             List<com.papusbarbershop.entity.VentaProducto> ventas = ventaProductoRepository.findByBarberoId(barbero.getId());
             ventas = ventas.stream()
                     .filter(v -> !v.getFecha().isBefore(fechaInicio) && !v.getFecha().isAfter(fechaFin))
                     .toList();
+            BigDecimal totalVentasImporteOriginal = ventas.stream()
+                    .map(v -> BigDecimalUtil.nvl(v.getImporteOriginal()))
+                    .reduce(BigDecimal.ZERO, BigDecimal::add)
+                    .setScale(2, RoundingMode.HALF_UP);
+            resumen.setTotalVentasImporteOriginal(totalVentasImporteOriginal);
+            BigDecimal totalVentas = ventas.stream()
+                    .map(v -> BigDecimalUtil.nvl(v.getImporte()))
+                    .reduce(BigDecimal.ZERO, BigDecimal::add)
+                    .setScale(2, RoundingMode.HALF_UP);
+            resumen.setTotalVentas(totalVentas);
             resumen.setCantidadVentas(ventas.size());
             resumen.setDetallesVentas(ventas.stream().map(venta -> {
                 DetalleVentaProductoDTO detalle = new DetalleVentaProductoDTO();
@@ -237,7 +244,8 @@ public class ReporteService {
             BigDecimal pagoBarbero = pagoPorServicios.add(totalComisiones).setScale(2, RoundingMode.HALF_UP);
             resumen.setPagoBarbero(pagoBarbero);
 
-            BigDecimal gananciaBarberia = totalGenerado.subtract(pagoBarbero).setScale(2, RoundingMode.HALF_UP);
+            // Ganancia neta para la barberia: solo servicios/cortes (ventas no suman ni restan en este monto)
+            BigDecimal gananciaBarberia = totalServicios.subtract(pagoPorServicios).setScale(2, RoundingMode.HALF_UP);
             resumen.setGananciaBarberia(gananciaBarberia);
 
             resumenBarberos.add(resumen);
