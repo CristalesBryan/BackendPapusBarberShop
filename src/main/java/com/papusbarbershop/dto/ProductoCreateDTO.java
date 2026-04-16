@@ -1,5 +1,6 @@
 package com.papusbarbershop.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.DecimalMin;
@@ -10,6 +11,7 @@ import java.math.BigDecimal;
 /**
  * DTO para crear un nuevo producto.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ProductoCreateDTO {
 
     @NotBlank(message = "El nombre es obligatorio")
