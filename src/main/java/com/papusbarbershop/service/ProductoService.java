@@ -4,6 +4,7 @@ import com.papusbarbershop.dto.ProductoCreateDTO;
 import com.papusbarbershop.dto.ProductoDTO;
 import com.papusbarbershop.entity.Producto;
 import com.papusbarbershop.exception.RecursoNoEncontradoException;
+import com.papusbarbershop.exception.ValidacionException;
 import com.papusbarbershop.repository.ProductoRepository;
 import com.papusbarbershop.repository.VentaProductoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,7 +55,7 @@ public class ProductoService {
         producto.setStock(productoCreateDTO.getStock());
         producto.setPrecioCosto(productoCreateDTO.getPrecioCosto());
         producto.setPrecioVenta(productoCreateDTO.getPrecioVenta());
-        producto.setComision(productoCreateDTO.getComision() != null ? productoCreateDTO.getComision() : 1);
+        producto.setComision(resolveComision(productoCreateDTO));
         producto.setDescripcion(productoCreateDTO.getDescripcion());
 
         Producto saved = productoRepository.save(producto);
@@ -77,7 +78,7 @@ public class ProductoService {
         producto.setStock(productoCreateDTO.getStock());
         producto.setPrecioCosto(productoCreateDTO.getPrecioCosto());
         producto.setPrecioVenta(productoCreateDTO.getPrecioVenta());
-        producto.setComision(productoCreateDTO.getComision() != null ? productoCreateDTO.getComision() : 1);
+        producto.setComision(resolveComision(productoCreateDTO));
         producto.setDescripcion(productoCreateDTO.getDescripcion());
 
         Producto saved = productoRepository.save(producto);
@@ -237,6 +238,19 @@ public class ProductoService {
     private void limpiarCacheExpirado() {
         long ahora = System.currentTimeMillis();
         presignedUrlCache.entrySet().removeIf(entry -> entry.getValue().expiresAt <= ahora);
+    }
+
+    private Integer resolveComision(ProductoCreateDTO productoCreateDTO) {
+        boolean comisionHabilitada = productoCreateDTO.getComisionHabilitada() == null || productoCreateDTO.getComisionHabilitada();
+        if (!comisionHabilitada) {
+            return null;
+        }
+
+        Integer comision = productoCreateDTO.getComision();
+        if (comision == null) {
+            throw new ValidacionException("Debe indicar la comisión cuando está habilitada");
+        }
+        return comision;
     }
 }
 

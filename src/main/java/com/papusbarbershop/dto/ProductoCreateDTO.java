@@ -33,6 +33,8 @@ public class ProductoCreateDTO {
     @Max(value = 100, message = "La comisión no puede ser mayor a 100")
     private Integer comision;
 
+    private Boolean comisionHabilitada = true;
+
     private String descripcion; // Descripción del producto (opcional)
 
     // ==================== CONSTRUCTORES ====================
@@ -80,6 +82,14 @@ public class ProductoCreateDTO {
 
     public void setComision(Integer comision) {
         this.comision = comision;
+    }
+
+    public Boolean getComisionHabilitada() {
+        return comisionHabilitada;
+    }
+
+    public void setComisionHabilitada(Boolean comisionHabilitada) {
+        this.comisionHabilitada = comisionHabilitada;
     }
 
     public String getDescripcion() {
