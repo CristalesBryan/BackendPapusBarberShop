@@ -183,7 +183,7 @@ public class ProductoService {
                 producto.getStock(),
                 producto.getPrecioCosto(),
                 producto.getPrecioVenta(),
-                producto.getComision() != null ? producto.getComision() : 1
+                producto.getComision()
         );
         dto.setDescripcion(producto.getDescripcion());
         return dto;
