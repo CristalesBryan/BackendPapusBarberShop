@@ -205,6 +205,9 @@ public class VentaProductoService {
         dto.setStock(producto.getStock());
         dto.setPrecioCosto(producto.getPrecioCosto());
         dto.setPrecioVenta(producto.getPrecioVenta());
+        dto.setComision(producto.getComision());
+        dto.setComisionHabilitada(producto.getComision() != null);
+        dto.setDescripcion(producto.getDescripcion());
         return dto;
     }
 
