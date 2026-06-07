@@ -241,7 +241,7 @@ public class ProductoService {
     }
 
     private Integer resolveComision(ProductoCreateDTO productoCreateDTO) {
-        boolean comisionHabilitada = productoCreateDTO.getComisionHabilitada() == null || productoCreateDTO.getComisionHabilitada();
+        boolean comisionHabilitada = productoCreateDTO.getComisionHabilitada() != null && productoCreateDTO.getComisionHabilitada();
         if (!comisionHabilitada) {
             return null;
         }

@@ -1,10 +1,14 @@
 package com.papusbarbershop.service;
 
 import com.papusbarbershop.dto.DetalleCorteDTO;
+import com.papusbarbershop.dto.DetalleReporteItemDTO;
 import com.papusbarbershop.dto.DetalleVentaProductoDTO;
 import com.papusbarbershop.dto.ResumenBarberoDTO;
+import com.papusbarbershop.dto.ResumenBarberoPagoDTO;
 import com.papusbarbershop.dto.ResumenDiarioDTO;
+import com.papusbarbershop.dto.ResumenMetodoPagoItemDTO;
 import com.papusbarbershop.dto.ResumenMensualDTO;
+import com.papusbarbershop.dto.ResumenPorMetodoPagoDTO;
 import com.papusbarbershop.entity.Barbero;
 import com.papusbarbershop.entity.Producto;
 import com.papusbarbershop.repository.BarberoRepository;
@@ -21,7 +25,9 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Servicio para la generacion de reportes y resumenes.
@@ -161,6 +167,168 @@ public class ReporteService {
 
     public ResumenDiarioDTO generarResumenPorFecha(LocalDate fecha) {
         return generarResumenDiario(fecha);
+    }
+
+    /**
+     * Resumen de cortes por método de pago (efectivo / tarjeta) en un rango de fechas.
+     */
+    public ResumenPorMetodoPagoDTO generarResumenPorMetodoPago(LocalDate fechaInicio, LocalDate fechaFin) {
+        validarRangoFechas(fechaInicio, fechaFin);
+        List<com.papusbarbershop.entity.Servicio> servicios = servicioRepository.findByFechaBetween(fechaInicio, fechaFin);
+
+        ResumenMetodoPagoItemDTO efectivo = new ResumenMetodoPagoItemDTO();
+        ResumenMetodoPagoItemDTO tarjeta = new ResumenMetodoPagoItemDTO();
+
+        for (com.papusbarbershop.entity.Servicio servicio : servicios) {
+            BigDecimal precio = BigDecimalUtil.nvl(servicio.getPrecio());
+            String metodo = normalizarMetodoPago(servicio.getMetodoPago());
+            if ("EFECTIVO".equals(metodo)) {
+                efectivo.setCantidad(efectivo.getCantidad() + 1);
+                efectivo.setTotal(efectivo.getTotal().add(precio));
+            } else if ("TARJETA".equals(metodo)) {
+                tarjeta.setCantidad(tarjeta.getCantidad() + 1);
+                tarjeta.setTotal(tarjeta.getTotal().add(precio));
+            }
+        }
+
+        efectivo.setTotal(efectivo.getTotal().setScale(2, RoundingMode.HALF_UP));
+        tarjeta.setTotal(tarjeta.getTotal().setScale(2, RoundingMode.HALF_UP));
+
+        ResumenPorMetodoPagoDTO resumen = new ResumenPorMetodoPagoDTO();
+        resumen.setEfectivo(efectivo);
+        resumen.setTarjeta(tarjeta);
+        return resumen;
+    }
+
+    /**
+     * Detalle de cortes en un rango, opcionalmente filtrado por método de pago.
+     */
+    public List<DetalleReporteItemDTO> generarDetalleReporte(LocalDate fechaInicio, LocalDate fechaFin, String metodoPago) {
+        validarRangoFechas(fechaInicio, fechaFin);
+        String filtroMetodo = metodoPago != null && !metodoPago.isBlank()
+                ? normalizarMetodoPago(metodoPago)
+                : null;
+
+        List<com.papusbarbershop.entity.Servicio> servicios = servicioRepository.findByFechaBetween(fechaInicio, fechaFin);
+        List<DetalleReporteItemDTO> detalle = new ArrayList<>();
+
+        for (com.papusbarbershop.entity.Servicio servicio : servicios) {
+            String metodo = normalizarMetodoPago(servicio.getMetodoPago());
+            if (filtroMetodo != null && !filtroMetodo.equals(metodo)) {
+                continue;
+            }
+            if (filtroMetodo == null && !"EFECTIVO".equals(metodo) && !"TARJETA".equals(metodo)) {
+                continue;
+            }
+
+            DetalleReporteItemDTO item = new DetalleReporteItemDTO();
+            item.setFecha(servicio.getFecha());
+            item.setHora(servicio.getHora());
+            item.setBarberoNombre(servicio.getBarbero() != null ? servicio.getBarbero().getNombre() : "—");
+            item.setCliente("—");
+            item.setTipoCorte(servicio.getTipoCorte());
+            item.setPrecioOriginal(BigDecimalUtil.nvl(servicio.getPrecioOriginal()));
+            item.setDescuentoPorcentaje(BigDecimalUtil.nvl(servicio.getDescuentoPorcentaje()));
+            item.setTotal(BigDecimalUtil.nvl(servicio.getPrecio()));
+            item.setMetodoPago(capitalizarMetodoPago(metodo));
+            detalle.add(item);
+        }
+
+        detalle.sort(Comparator
+                .comparing(DetalleReporteItemDTO::getFecha).reversed()
+                .thenComparing(DetalleReporteItemDTO::getHora, Comparator.nullsLast(Comparator.reverseOrder())));
+        return detalle;
+    }
+
+    /**
+     * Rendimiento por barbero con desglose efectivo/tarjeta y comisión del período.
+     */
+    public List<ResumenBarberoPagoDTO> generarResumenPorBarberoPago(LocalDate fechaInicio, LocalDate fechaFin) {
+        validarRangoFechas(fechaInicio, fechaFin);
+        List<Barbero> barberos = barberoRepository.findAll();
+        List<ResumenBarberoPagoDTO> resultado = new ArrayList<>();
+
+        for (Barbero barbero : barberos) {
+            List<com.papusbarbershop.entity.Servicio> servicios = servicioRepository.findByBarberoId(barbero.getId());
+            servicios = servicios.stream()
+                    .filter(s -> !s.getFecha().isBefore(fechaInicio) && !s.getFecha().isAfter(fechaFin))
+                    .toList();
+
+            int cortesEfectivo = 0;
+            int cortesTarjeta = 0;
+            BigDecimal montoTotal = BigDecimal.ZERO;
+
+            for (com.papusbarbershop.entity.Servicio servicio : servicios) {
+                String metodo = normalizarMetodoPago(servicio.getMetodoPago());
+                BigDecimal precio = BigDecimalUtil.nvl(servicio.getPrecio());
+                montoTotal = montoTotal.add(precio);
+                if ("EFECTIVO".equals(metodo)) {
+                    cortesEfectivo++;
+                } else if ("TARJETA".equals(metodo)) {
+                    cortesTarjeta++;
+                }
+            }
+
+            if (servicios.isEmpty()) {
+                continue;
+            }
+
+            BigDecimal porcentaje = BigDecimalUtil.nvl(barbero.getPorcentajeServicio())
+                    .divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP);
+            BigDecimal comisionServicios = montoTotal.multiply(porcentaje).setScale(2, RoundingMode.HALF_UP);
+
+            List<com.papusbarbershop.entity.VentaProducto> ventas = ventaProductoRepository.findByBarberoId(barbero.getId());
+            ventas = ventas.stream()
+                    .filter(v -> !v.getFecha().isBefore(fechaInicio) && !v.getFecha().isAfter(fechaFin))
+                    .toList();
+            BigDecimal comisionProductos = ventas.stream()
+                    .map(venta -> {
+                        Integer comision = 0;
+                        if (venta.getProducto() != null) {
+                            comision = venta.getProducto().getComision();
+                            if (comision == null) comision = 0;
+                        }
+                        return BigDecimal.valueOf(comision).multiply(BigDecimal.valueOf(BigDecimalUtil.nvlInt(venta.getCantidad())));
+                    })
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            ResumenBarberoPagoDTO resumen = new ResumenBarberoPagoDTO();
+            resumen.setBarberoId(barbero.getId());
+            resumen.setBarberoNombre(barbero.getNombre());
+            resumen.setCortesEfectivo(cortesEfectivo);
+            resumen.setCortesTarjeta(cortesTarjeta);
+            resumen.setTotalCortes(servicios.size());
+            resumen.setMontoTotal(montoTotal.setScale(2, RoundingMode.HALF_UP));
+            resumen.setComisionCalculada(comisionServicios.add(comisionProductos).setScale(2, RoundingMode.HALF_UP));
+            resultado.add(resumen);
+        }
+
+        resultado.sort(Comparator.comparing(ResumenBarberoPagoDTO::getMontoTotal).reversed());
+        return resultado;
+    }
+
+    private void validarRangoFechas(LocalDate fechaInicio, LocalDate fechaFin) {
+        if (fechaInicio == null || fechaFin == null) {
+            throw new IllegalArgumentException("fechaInicio y fechaFin son obligatorias");
+        }
+        if (fechaFin.isBefore(fechaInicio)) {
+            throw new IllegalArgumentException("fechaFin no puede ser anterior a fechaInicio");
+        }
+    }
+
+    private String normalizarMetodoPago(String metodoPago) {
+        if (metodoPago == null || metodoPago.isBlank()) {
+            return "";
+        }
+        return metodoPago.trim().toUpperCase(Locale.ROOT);
+    }
+
+    private String capitalizarMetodoPago(String metodoNormalizado) {
+        if (metodoNormalizado == null || metodoNormalizado.isBlank()) {
+            return "—";
+        }
+        String lower = metodoNormalizado.toLowerCase(Locale.ROOT);
+        return Character.toUpperCase(lower.charAt(0)) + lower.substring(1);
     }
 
     private List<ResumenBarberoDTO> calcularResumenBarberos(LocalDate fechaInicio, LocalDate fechaFin) {
