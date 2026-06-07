@@ -87,6 +87,8 @@ public class HorarioService {
         // Validar que el barbero existe
         Barbero barbero = barberoService.findEntityById(horarioCreateDTO.getBarberoId());
 
+        validarFechaNoPasada(horarioCreateDTO.getFecha());
+
         // Validar que la hora de entrada sea menor que la hora de salida
         if (horarioCreateDTO.getHoraEntrada().compareTo(horarioCreateDTO.getHoraSalida()) >= 0) {
             throw new ValidacionException("La hora de entrada debe ser menor que la hora de salida");
@@ -137,6 +139,8 @@ public class HorarioService {
 
         // Validar que el barbero existe
         Barbero barbero = barberoService.findEntityById(horarioCreateDTO.getBarberoId());
+
+        validarFechaNoPasada(horarioCreateDTO.getFecha());
 
         // Validar que la hora de entrada sea menor que la hora de salida
         if (horarioCreateDTO.getHoraEntrada().compareTo(horarioCreateDTO.getHoraSalida()) >= 0) {
@@ -298,6 +302,13 @@ public class HorarioService {
      * @param horario Entidad Horario
      * @return DTO de Horario
      */
+    private void validarFechaNoPasada(LocalDate fecha) {
+        if (fecha != null && fecha.isBefore(LocalDate.now())) {
+            throw new ValidacionException(
+                    "No se pueden asignar horarios en fechas pasadas. Fecha solicitada: " + fecha);
+        }
+    }
+
     private HorarioDTO convertToDTO(Horario horario) {
         LocalDate fecha = null;
         if (horario.getCreatedAt() != null) {
