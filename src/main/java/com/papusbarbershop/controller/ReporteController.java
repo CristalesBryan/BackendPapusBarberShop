@@ -3,8 +3,10 @@ package com.papusbarbershop.controller;
 import com.papusbarbershop.dto.DetalleReporteItemDTO;
 import com.papusbarbershop.dto.ResumenBarberoPagoDTO;
 import com.papusbarbershop.dto.ResumenDiarioDTO;
+import com.papusbarbershop.dto.ResumenMerchandisingDTO;
 import com.papusbarbershop.dto.ResumenMensualDTO;
 import com.papusbarbershop.dto.ResumenPorMetodoPagoDTO;
+import com.papusbarbershop.service.ReporteMerchandisingService;
 import com.papusbarbershop.service.ReporteService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +31,9 @@ public class ReporteController {
 
     @Autowired
     private ReporteService reporteService;
+
+    @Autowired
+    private ReporteMerchandisingService reporteMerchandisingService;
 
     /**
      * Obtiene el resumen diario.
@@ -129,6 +134,14 @@ public class ReporteController {
             log.warn("GET /reportes/por-barbero: {}", e.getMessage());
             return ResponseEntity.badRequest().build();
         }
+    }
+
+    @GetMapping("/merchandising")
+    public ResponseEntity<ResumenMerchandisingDTO> getResumenMerchandising(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(required = false) String categoria) {
+        return ResponseEntity.ok(reporteMerchandisingService.generarResumen(fechaInicio, fechaFin, categoria));
     }
 }
 

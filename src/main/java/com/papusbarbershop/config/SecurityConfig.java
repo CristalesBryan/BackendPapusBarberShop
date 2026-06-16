@@ -92,7 +92,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/citas/disponibilidad/**").permitAll() // GET para disponibilidad con cualquier parámetro (público)
                         .requestMatchers("/barberos").permitAll() // GET para lista de barberos (público para Vista-Clientes)
                         .requestMatchers("/productos").permitAll() // GET para lista de productos (público)
-                        .requestMatchers("/api/citas").permitAll() // POST para crear citas (vista pública)
+                        .requestMatchers("/merchandising/**").permitAll()
+                        .requestMatchers("/ventas-merch").permitAll()
                         
                         // Endpoints de S3 - URLs presignadas públicas, eliminación requiere autenticación
                         .requestMatchers("/api/s3/presigned-url/**").permitAll() // Generación de URLs presignadas
@@ -116,6 +117,7 @@ public class SecurityConfig {
                         .requestMatchers("/citas/**").hasRole("ADMIN")
                         .requestMatchers("/mobiliario-equipo/**").hasRole("ADMIN")
                         .requestMatchers("/reportes/**").hasRole("ADMIN")
+                        .requestMatchers("/admin/merchandising/**").hasRole("ADMIN")
                         
                         // Requerir autenticación para todas las demás peticiones
                         .anyRequest().authenticated()
